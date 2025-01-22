@@ -2,11 +2,18 @@ import React from "react";
 import { useEffect, useState } from "react";
 import { useForm } from 'react-hook-form';
 import { useDispatch,useSelector } from "react-redux";
-import { login,setTokens } from "../store/authSlice";  // Import your Redux action
+import { login } from "../store/authSlice";  // Import your Redux action
 import { Link, useNavigate } from "react-router-dom";
 import { signIn } from "../api/api";
 import Cookies from 'js-cookie';
+const ValidateData = (data)=>{
+    if(data.email && data.password){
+        const email = data.email.toLowerCase()
+        const password = data.password
+        return {email,password}
+    }
 
+}
 const SignIn = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
     const dispatch = useDispatch();
@@ -14,10 +21,12 @@ const SignIn = () => {
 
     const onSubmit = async (data) => {
         try {
-            const response = await signIn(data);
+            let {email,password} = ValidateData(data) 
+           
+            const response = await signIn({email,password})
             const result = response.data;
             const userData = result.data.user;
-            console.log(userData)
+           
             const accessToken = result.data.accessToken;
             const refreshToken = result.data.newRefreshToken
           

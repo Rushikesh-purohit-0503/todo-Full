@@ -42,7 +42,7 @@ router
     .put(authenticateUser, userValidator,
         validateRequest,
         verifyUserRoles(USER_ROLES.admin),
-        userController.handleUpdate);
+        userController.handleUpdate); 
 
 
 // <------- delete user (only by admin) --------> //

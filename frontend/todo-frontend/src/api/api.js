@@ -13,5 +13,13 @@ export const signUp = async (data) => {
 }
 
 export const signIn = async (data) => {
-    return await api.post("/users/login", data)
+    return await api.post("/users/login", data,{
+        withCredentials: true,
+    })
 }
+
+export const logOut = async () => {
+    return await api.post("/users/logout",{},{
+        withCredentials: true
+    })
+} 

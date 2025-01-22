@@ -23,7 +23,7 @@ const createNewUser = async (req, res) => {
         const hashedPassword = await encryptPassword(password)
 
         const newUser = await userModel.create({
-            userName: userName,
+            userName: userName, 
             email: email,
             password: hashedPassword,
             quote: quote
@@ -35,10 +35,10 @@ const createNewUser = async (req, res) => {
         return res
             .status(200).json(new ApiResponse(200, {
                 user: newUser
-            }, "User created successfully"))
+            }, "User created successfully")) 
 
     } catch (error) {
-        throw new ApiError(400, "User not created", error)
+        throw new ApiError(400, "User not created", error) 
     }
 }
 
@@ -67,14 +67,14 @@ const handleLogin = async (req, res) => {
         if (!isValid) { throw new ApiError(400, "Invalid password") }
     } catch (error) {
         throw new ApiError(400, "error verifying password", error)
-    }
+    } 
 
     const { accessToken, refreshToken: newRefreshToken } = await generateAccessAndRefreshToken(user)
     const loggedInUser = await userModel.findById(user._id).select("-password -refreshToken -__v").exec()
 
     const options = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: false,
         maxAge: 24 * 60 * 60 * 1000,
     }
 
@@ -147,7 +147,7 @@ const logOut = async (req, res) => {
 
         const options = {
             httpOnly: true,
-            secure: true,
+            secure: false,
             sameSite: 'Strict',
         }
 
@@ -160,7 +160,7 @@ const logOut = async (req, res) => {
     } catch (error) {
         throw new ApiError()
     }
-}
+} 
 
 //delete
 const deleteUser = async (req, res) => {
@@ -182,7 +182,7 @@ const deleteUser = async (req, res) => {
     return res.status(200).json(new ApiResponse(200, [result,deletedTodos], "User and todos deleted successfully"))
 }
 
-//getAlluser
+//getAlluser    
 const getAllUser = async (_, res) => {
     try {
         const users = await userModel.find().select("-refreshToken -__v").exec()
@@ -196,7 +196,7 @@ const getAllUser = async (_, res) => {
 }
 
 //a perticular userInfo
-const getUser = async (req, res) => {
+const getUser = async (req, res) => { 
     let { id } = req.params
     id = id || req.user._id.toString()
 

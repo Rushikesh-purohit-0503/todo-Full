@@ -9,8 +9,11 @@ app.use(express.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 app.use(cookieParser())
-app.use(cors())
 
+app.use(cors({
+    origin: 'http://localhost:3000', // Specify the allowed origin
+    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+}));
 app.use('/api', route)
 
-module.exports = app 
+module.exports = app  

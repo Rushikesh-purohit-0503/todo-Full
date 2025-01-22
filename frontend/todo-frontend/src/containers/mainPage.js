@@ -3,12 +3,14 @@ import { PlusCircle, LogOut, Search, CheckCircle, Trash2, Edit } from 'lucide-re
 import { useDispatch, useSelector } from 'react-redux';
 import profile from '../assets/user-circle.svg'
 import { logout } from '../store/authSlice';
-
+import { useNavigate } from 'react-router-dom';
+import { logOut } from '../api/api';
 const MainPage = () => {
     const [tasks, setTasks] = useState([]);
     const [newTask, setNewTask] = useState('');
     const [searchQuery, setSearchQuery] = useState('')
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const user = useSelector((state) => (state.auth.userData))
     console.log("Current User:", useSelector((state) => state.auth.userData));
     const handleAddTask = (e) => {
@@ -27,8 +29,18 @@ const MainPage = () => {
         }
     };
 
-    const handleLogout = () => {
-        dispatch(logout());
+    const handleLogout = async () => {
+        try {
+            const response = await logOut();
+            console.log(response)
+            if (response) {
+
+                dispatch(logout());
+                navigate('/')
+            }
+        } catch (error) {
+            console.error(error)
+        }
     };
 
     const toggleTaskStatus = (taskId) => {
@@ -46,26 +58,32 @@ const MainPage = () => {
     );
 
     return (
-        <div className="min-h-screen bg-gray-100">
+        <div className="min-h-screen bg-blue-100">
             {/* Header */}
             <header className="bg-white shadow">
-                <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-                    <h1 className="text-2xl font-bold text-gray-900">TaskMaster</h1>
-                    <div className="flex items-center gap-4">
+                <div className="flex justify-between items-center px-2 py-4">
+                    <h1 className="text-2xl font-bold text-blue-600">TaskMaster</h1>
+                    <div className="flex items-center space-x-4">
                         {user && (
-                            <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-5 border-2 border-blue-500 rounded-lg px-4 py-2">
-                                    <img src={profile} alt="Profile" className="w-6" />
-                                    {user?.userName || 'User'}
+                            <div className="flex items-center">
+                                <div className="flex items-center gap-2 border-2 border-blue-500 rounded-lg px-3 py-1.5">
+                                    <span className="text-gray-700">
+                                        {user?.userName || 'User'}
+                                    </span>
+                                    <img
+                                        src={profile}
+                                        alt="Profile"
+                                        className="w-6 h-6 object-cover"
+                                    />
                                 </div>
                             </div>
                         )}
                         <button
                             onClick={handleLogout}
-                            className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900"
+                            className="flex items-center gap-2 px-4 py-1.5 text-gray-600 hover:text-gray-900 transition-colors duration-200"
                         >
                             <LogOut className="h-5 w-5" />
-                            Logout
+                            <span>Logout</span>
                         </button>
                     </div>
                 </div>
@@ -74,13 +92,13 @@ const MainPage = () => {
             <main className="max-w-4xl mx-auto px-4 py-8">
                 {/* Search Bar */}
                 <div className="relative mb-6">
-                    <Search className="h-5 w-5 absolute left-3 top-3 text-gray-400" />
+                    <Search className="h-5 w-5 absolute left-3 top-3 text-blue-400" />
                     <input
                         type="text"
                         placeholder="Search tasks..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className=" pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                 </div>
                 {/* Add Task Form */}
