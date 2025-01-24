@@ -41,16 +41,16 @@ router
 // <------ get logged in users tasks ----->//
 router
     .route('/user-tasks')
-    .post(
+    .post( 
         authanticateUser,
         todoController.getTodo
     )
-router
-    .route('/user-tasks /:id')
-    .post(
+router 
+    .route('/user-tasks/:id')  
+    .post( 
         authanticateUser,
         todoController.getTodo
-    )
+    ) 
 
 
 // <--------- update task --------> //
@@ -58,7 +58,6 @@ router
     .route('/update/:todoId')
     .put(
         authanticateUser,
-        todoValidator,
         validateRequest,
         todoController.updateTodo
     )
@@ -67,7 +66,7 @@ router
 // <--------- delete tasks (only done by admin) --------> //
 router
     .route('/delete/:todoId')
-    .delete(authanticateUser, verifyUserRoles(USER_ROLES.admin), todoController.deleteTodo)
+    .delete(authanticateUser, todoController.deleteTodo)
 
 
 module.exports = router

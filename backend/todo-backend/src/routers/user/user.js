@@ -9,12 +9,12 @@ const accessTokenController = require('../../controller/accessTokenController');
 
 // <------ create user -----> //
 router
-    .route('/create')
+    .route('/create') 
     .post(userValidator,
         validateRequest,
         userController.createNewUser
     );
-
+ 
 
 // <------- Login --------> //
 router 
@@ -34,7 +34,7 @@ router
 // <------- update user --------> //
 router
     .route('/update')
-    .put(authenticateUser, userValidator,
+    .put(authenticateUser,  
         validateRequest,
         userController.handleUpdate);
 router

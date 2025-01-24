@@ -1,3 +1,4 @@
+import AdminPanel from "./containers/AdminPanel";
 import HomePage from "./containers/HomePage";
 import MainPage from "./containers/mainPage";
 import SignIn from "./containers/SignIn";
@@ -22,6 +23,12 @@ const routes = [
         path: '/main',
         component: MainPage,
         name: 'main',
+    },
+    {
+        path: '/admin',
+        component: AdminPanel,
+        name: 'admin',
+        allowedRoles: 1,
     }
 ]
 

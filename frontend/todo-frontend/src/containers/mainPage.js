@@ -1,176 +1,199 @@
-import React, { useState } from 'react';
-import { PlusCircle, LogOut, Search, CheckCircle, Trash2, Edit } from 'lucide-react';
-import { useDispatch, useSelector } from 'react-redux';
-import profile from '../assets/user-circle.svg'
-import { logout } from '../store/authSlice';
-import { useNavigate } from 'react-router-dom';
-import { logOut } from '../api/api';
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { login, logout } from "../store/authSlice";
+import { logOut, fetchTodos, createTodo, updateTodo, deleteTodo, updateUser } from "../api/api";
+import Header from "../components/Header";
+import SearchBar from "../components/SearchBar";
+import TaskList from "../components/TaskList";
+import AddTaskModal from "../components/AddTaskFormModel";
+import UpdateModal from "../components/Updatemodel";
+
 const MainPage = () => {
     const [tasks, setTasks] = useState([]);
-    const [newTask, setNewTask] = useState('');
-    const [searchQuery, setSearchQuery] = useState('')
+    const [searchQuery, setSearchQuery] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [isModalOpen, setModalOpen] = useState(false);
+    const [updateModalOpen, setUpdateModalOpen] = useState(false);
+    const [selectedTask, setSelectedTask] = useState(null);
+    const [errorMessage, setErrorMessage] = useState("");
+
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const user = useSelector((state) => (state.auth.userData))
-    console.log("Current User:", useSelector((state) => state.auth.userData));
-    const handleAddTask = (e) => {
-        e.preventDefault();
-        if (newTask.trim()) {
-            setTasks([
-                ...tasks,
-                {
-                    id: Date.now(),
-                    title: newTask,
-                    completed: false,
-                    createdAt: new Date().toISOString()
-                }
-            ]);
-            setNewTask('');
+    const user = useSelector((state) => state.auth.userData);
+
+    useEffect(() => {
+        const userData = localStorage.getItem("userInfo");
+        if (userData) {
+            dispatch(login(JSON.parse(userData)));
         }
-    };
+    }, [dispatch]);
+
+    useEffect(() => {
+        const fetchTasks = async () => {
+            setLoading(true);
+            try {
+                const response = await fetchTodos();
+                setTasks(response.data?.data || []);
+            } catch (error) {
+                console.error("Error fetching todos:", error);
+                setErrorMessage("Failed to load tasks.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (user) {
+            fetchTasks();
+        }
+    }, [user]);
 
     const handleLogout = async () => {
         try {
-            const response = await logOut();
-            console.log(response)
-            if (response) {
-
-                dispatch(logout());
-                navigate('/')
-            }
+            await logOut();
+            dispatch(logout());
+            localStorage.clear();
+            navigate("/");
         } catch (error) {
-            console.error(error)
+            console.error("Error logging out:", error);
         }
     };
 
-    const toggleTaskStatus = (taskId) => {
-        setTasks(tasks.map(task =>
-            task.id === taskId ? { ...task, completed: !task.completed } : task
-        ));
+    const handleAddTask = async (data) => {
+        if (data) {
+            try {
+                const response = await createTodo({
+                    title: data.title,
+                    description: data.description,
+                    status: data.status,
+                });
+                setTasks((prev) => [...prev, response.data]);
+                setModalOpen(false);
+            } catch (error) {
+                console.error("Error creating task:", error);
+                setErrorMessage("Failed to create task.");
+            }
+        }
     };
 
-    const deleteTask = (taskId) => {
-        setTasks(tasks.filter(task => task.id !== taskId));
+    const toggleTaskStatus = async (taskId, currentStatus) => {
+        try {
+            const updatedTask = (await updateTodo(taskId, { status: !currentStatus }))?.data;
+            setTasks((prev) =>
+                prev.map((task) =>
+                    task._id === taskId ? { ...task, completed: updatedTask.data.completed } : task
+                )
+            );
+        } catch (error) {
+            console.error("Error updating task status:", error);
+            setErrorMessage("Failed to update task status.");
+        }
     };
 
-    const filteredTasks = tasks.filter(task =>
-        task.title.toLowerCase().includes(searchQuery.toLowerCase())
+    const handleEditTask = (task) => {
+        setSelectedTask(task);
+        setUpdateModalOpen(true);
+    };
+
+    const handleUpdateTask = async (taskId, updatedData) => {
+        try {
+            const response = await updateTodo(taskId, updatedData);
+            setTasks((prev) =>
+                prev.map((task) =>
+                    task._id === taskId ? { ...task, ...response.data.data } : task
+                )
+            );
+            setUpdateModalOpen(false);
+        } catch (error) {
+            setErrorMessage("Failed to update task.");
+        }
+    };
+
+    const deleteTask = async (taskId) => {
+        try {
+            await deleteTodo(taskId);
+            setTasks((prev) => prev.filter((task) => task._id !== taskId));
+        } catch (error) {
+            console.error("Error deleting task:", error);
+            setErrorMessage("Failed to delete task.");
+        }
+    };
+
+    const handleUpdateUser = async (updatedUserData, closeModalCallback) => {
+        try {
+            const updatedUser = (await updateUser(updatedUserData)).data;
+            console.log(updatedUser);
+
+            localStorage.setItem("userInfo", JSON.stringify(updatedUser.data.updatedInfo)); // Update local storage
+
+            if (closeModalCallback) {
+                closeModalCallback(); // Close modal or dropdown
+            }
+        } catch (error) {
+            console.error("Error updating user profile:", error);
+            setErrorMessage("Failed to update user profile.");
+        }
+    };
+
+    const filteredTasks = tasks.filter((task) =>
+        task.title.toLowerCase().includes(searchQuery)
     );
 
     return (
         <div className="min-h-screen bg-blue-100">
-            {/* Header */}
-            <header className="bg-white shadow">
-                <div className="flex justify-between items-center px-2 py-4">
-                    <h1 className="text-2xl font-bold text-blue-600">TaskMaster</h1>
-                    <div className="flex items-center space-x-4">
-                        {user && (
-                            <div className="flex items-center">
-                                <div className="flex items-center gap-2 border-2 border-blue-500 rounded-lg px-3 py-1.5">
-                                    <span className="text-gray-700">
-                                        {user?.userName || 'User'}
-                                    </span>
-                                    <img
-                                        src={profile}
-                                        alt="Profile"
-                                        className="w-6 h-6 object-cover"
-                                    />
-                                </div>
-                            </div>
-                        )}
-                        <button
-                            onClick={handleLogout}
-                            className="flex items-center gap-2 px-4 py-1.5 text-gray-600 hover:text-gray-900 transition-colors duration-200"
-                        >
-                            <LogOut className="h-5 w-5" />
-                            <span>Logout</span>
-                        </button>
-                    </div>
-                </div>
-            </header>
+            {/* Header Component */}
+            <Header user={user} onLogout={handleLogout} onUpdateUser={handleUpdateUser} />
 
+            {/* Main Content */}
             <main className="max-w-4xl mx-auto px-4 py-8">
-                {/* Search Bar */}
-                <div className="relative mb-6">
-                    <Search className="h-5 w-5 absolute left-3 top-3 text-blue-400" />
-                    <input
-                        type="text"
-                        placeholder="Search tasks..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className=" pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                {/* Search Bar Component */}
+                <SearchBar searchQuery={searchQuery} onSearch={setSearchQuery} />
+
+                {/* Add Task Button */}
+                <div className="flex justify-end mb-4">
+                    <button
+                        onClick={() => setModalOpen(true)}
+                        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                    >
+                        Add Task
+                    </button>
+                </div>
+
+                {/* Error Message */}
+                {errorMessage && (
+                    <div className="text-center text-red-500 py-2">{errorMessage}</div>
+                )}
+
+                {/* Task List */}
+                {loading ? (
+                    <div className="text-center py-8 text-gray-500">Loading tasks...</div>
+                ) : (
+                    <TaskList
+                        tasks={filteredTasks}
+                        onToggleStatus={toggleTaskStatus}
+                        onDelete={deleteTask}
+                        onEditTask={handleEditTask}
                     />
-                </div>
-                {/* Add Task Form */}
-                <form onSubmit={handleAddTask} className="mb-8">
-                    <div className="flex gap-4">
-                        <input
-                            type="text"
-                            value={newTask}
-                            onChange={(e) => setNewTask(e.target.value)}
-                            placeholder="Add a new task..."
-                            className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                        <button
-                            type="submit"
-                            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                        >
-                            <PlusCircle className="h-5 w-5" />
-                            Add Task
-                        </button>
-                    </div>
-                </form>
-
-
-
-                {/* Tasks List */}
-                <div className="space-y-4">
-                    {filteredTasks.length === 0 && (
-                        <div className="text-center py-8 text-gray-500">
-                            No tasks found. Add some tasks to get started!
-                        </div>
-                    )}
-                    {filteredTasks.map((task) => (
-                        <div
-                            key={task.id}
-                            className={`bg-white p-4 rounded-lg shadow-sm border ${task.completed ? 'border-green-200 bg-green-50' : 'border-gray-200'
-                                }`}
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3 flex-1">
-                                    <button
-                                        onClick={() => toggleTaskStatus(task.id)}
-                                        className={`p-1 rounded-full ${task.completed ? 'text-green-500' : 'text-blue-500'
-                                            }`}
-                                    >
-                                        <CheckCircle className="h-6 w-6" />
-                                    </button>
-                                    <span className={`flex-1 ${task.completed ? 'line-through text-blue-500' : ''}`}>
-                                        {task.title}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => {/* Handle edit */ }}
-                                        className="p-1 text-blue-500 hover:text-gray-600"
-                                    >
-                                        <Edit className="h-5 w-5 " />
-                                    </button>
-                                    {/* <button
-                                        onClick={() => deleteTask(task.id)}
-                                        className="p-1 text-gray-400 hover:text-red-600"
-                                    >
-                                        <Trash2 className="h-5 w-5" />
-                                    </button> */}
-                                </div>
-                            </div>
-                            <div className="mt-2 text-sm text-gray-500">
-                                Created: {new Date(task.createdAt).toLocaleDateString()}
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                )}
             </main>
+
+            {/* Add Task Modal */}
+            {isModalOpen && (
+                <AddTaskModal
+                    onClose={() => setModalOpen(false)}
+                    onAddTask={handleAddTask}
+                />
+            )}
+
+            {/* Update Task Modal */}
+            {updateModalOpen && (
+                <UpdateModal
+                    isOpen={updateModalOpen}
+                    onClose={() => setUpdateModalOpen(false)}
+                    task={selectedTask}
+                    onUpdate={handleUpdateTask}
+                />
+            )}
         </div>
     );
 };

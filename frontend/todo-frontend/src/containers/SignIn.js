@@ -1,16 +1,16 @@
 import React from "react";
-import { useEffect, useState } from "react";
 import { useForm } from 'react-hook-form';
-import { useDispatch,useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { login } from "../store/authSlice";  // Import your Redux action
 import { Link, useNavigate } from "react-router-dom";
 import { signIn } from "../api/api";
-import Cookies from 'js-cookie';
-const ValidateData = (data)=>{
-    if(data.email && data.password){
+
+
+const ValidateData = (data) => {
+    if (data.email && data.password) {
         const email = data.email.toLowerCase()
         const password = data.password
-        return {email,password}
+        return { email, password }
     }
 
 }
@@ -21,28 +21,32 @@ const SignIn = () => {
 
     const onSubmit = async (data) => {
         try {
-            let {email,password} = ValidateData(data) 
-           
-            const response = await signIn({email,password})
+            let { email, password } = ValidateData(data)
+
+            const response = await signIn({ email, password })
             const result = response.data;
             const userData = result.data.user;
-           
+            const userRole = userData.role
             const accessToken = result.data.accessToken;
             const refreshToken = result.data.newRefreshToken
-          
-            // Dispatch user data to Redux
-            dispatch(login(userData));
 
+            dispatch(login(userData));
+            // Dispatch user data to Redux
+            localStorage.setItem('userInfo', JSON.stringify(userData))
             // Save tokens to localStorage
             localStorage.setItem('accessToken', accessToken);
             localStorage.setItem('refreshToken', refreshToken)
-            navigate('/main');  // Navigate to main page after successful login
+            if (userRole === 1) {
+                navigate("/admin"); // Admin redirected to admin panel
+            } else {
+                navigate("/main"); // Regular user redirected to main page
+            }
         } catch (error) {
             console.error("Login failed:", error);
             // Handle error state or display appropriate message
         }
     }
-    
+
     return (
         <React.Fragment>
             <div className="min-h-screen bg-gray-100 flex flex-col">

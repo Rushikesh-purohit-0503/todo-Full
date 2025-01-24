@@ -56,7 +56,7 @@ const getAlltodos = async (req, res) => {
                 .exec();
 
             if (!todos || todos.length === 0) {
-                throw new ApiError(404, "No todos found for this user");
+                res.status(400).json(new ApiResponse(400,{},"no todos found"))
             }
             return res
                 .status(200)
@@ -99,7 +99,7 @@ const getTodo = async (req, res) => {
             }).select('-__v -timestamps');
 
             if (!todo) {
-                throw new ApiError(404, "Todo not found for this user");
+                res.status(400).json(new ApiResponse(400,{},"no todos found"))
             }
 
             return res.status(200).json(new ApiResponse(200, todo, "Todo fetched successfully"));
@@ -108,13 +108,13 @@ const getTodo = async (req, res) => {
             const todos = await todoModel.find({ user_id: new mongoose.Types.ObjectId(id) }).select('-__v -timestamps');
 
             if (!todos || todos.length === 0) {
-                throw new ApiError(404, "No todos found for this user");
+                res.status(400).json(new ApiResponse(400,{},"no todos found"))
             }
 
             return res.status(200).json(new ApiResponse(200, todos, "Todos fetched successfully"));
         }
     } catch (error) {
-        throw new ApiError(501, "Error fetching tasks", error);
+        console.error(error)
     }
 };
 
@@ -174,9 +174,9 @@ const deleteTodo = async (req, res) => {
             throw new ApiError(400, "Invalid todo ID format");
         }
 
-        if (req.user.role !== USER_ROLES.admin) { 
-            throw new ApiError(403, "Not authorized: Only admins can delete users");
-        }
+        // if (req.user.role !== USER_ROLES.admin) { 
+        //     throw new ApiError(403, "Not authorized: Only admins can delete users");
+        // }
         const todo = await todoModel.findById(todoId);
         if (!todo) { throw new ApiError(404, "Todo not found") }
         const result = await todo.deleteOne({ _id: todoId })

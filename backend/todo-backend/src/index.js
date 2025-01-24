@@ -14,6 +14,6 @@ app.use(cors({
     origin: 'http://localhost:3000', // Specify the allowed origin
     credentials: true, // Allow credentials (cookies, authorization headers, etc.)
 }));
-app.use('/api', route)
+app.use('/api', route) 
 
 module.exports = app  

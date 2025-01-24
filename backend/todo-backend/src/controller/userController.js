@@ -89,29 +89,29 @@ const handleLogin = async (req, res) => {
 
 //Update 
 const handleUpdate = async (req, res) => {
-    const { userName, quote, password } = req.body;
+    let { userName, quote, password } = req.body;
     let { userId } = req.params;
 
     // Validate input
-    if ([userName, quote, password].some((val) => !val || val.trim() === '')) {
+    if ([userName, quote].some((val) => !val || val.trim() === '')) {
         throw new ApiError(400, "Please enter valid details");
     }
 
     const loggedInUserId = req.user?._id;
     const userRole = req.user?.role;
     userId = userId || req.user?._id;
-
+   
     if (userRole !== USER_ROLES.admin && loggedInUserId.toString() !== userId.toString()) {
         throw new ApiError(403, "Not authorized: Only admins or the user themselves can update this profile");
     }
 
     try {
-        const hashedPassword = await encryptPassword(password)
+        // const hashedPassword = await encryptPassword(password)
         const updatedUser = await userModel.findByIdAndUpdate(
             userId,
-            { userName, quote, password: hashedPassword },
+            { userName, quote },
             { new: true, runValidators: true }
-        ).select("-refreshToken -__v");
+        ).select("-password -refreshToken -__v");
 
         if (!updatedUser) {
             throw new ApiError(404, "User not found");
