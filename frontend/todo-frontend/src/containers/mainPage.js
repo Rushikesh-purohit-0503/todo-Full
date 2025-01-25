@@ -35,6 +35,7 @@ const MainPage = () => {
             try {
                 const response = await fetchTodos();
                 setTasks(response.data?.data || []);
+
             } catch (error) {
                 console.error("Error fetching todos:", error);
                 setErrorMessage("Failed to load tasks.");
@@ -67,7 +68,15 @@ const MainPage = () => {
                     description: data.description,
                     status: data.status,
                 });
-                setTasks((prev) => [...prev, response.data]);
+                console.log("Task creation response:", response.data); // Debug API response
+
+                const newTask = response.data.data;
+
+                // Update the state immediately to reflect the new task
+                setTasks((prev) =>{ 
+                    
+                    return [...prev, newTask]});
+
                 setModalOpen(false);
             } catch (error) {
                 console.error("Error creating task:", error);
@@ -136,7 +145,7 @@ const MainPage = () => {
     };
 
     const filteredTasks = tasks.filter((task) =>
-        task.title.toLowerCase().includes(searchQuery)
+        task.title?.toLowerCase().includes(searchQuery)
     );
 
     return (
@@ -145,7 +154,7 @@ const MainPage = () => {
             <Header user={user} onLogout={handleLogout} onUpdateUser={handleUpdateUser} />
 
             {/* Main Content */}
-            <main className="max-w-4xl mx-auto px-4 py-8">
+            <main className="max-w-4xl mx-auto mt-2 px-4 py-8">
                 {/* Search Bar Component */}
                 <SearchBar searchQuery={searchQuery} onSearch={setSearchQuery} />
 
@@ -165,15 +174,20 @@ const MainPage = () => {
                 )}
 
                 {/* Task List */}
+                {/* Task List */}
                 {loading ? (
                     <div className="text-center py-8 text-gray-500">Loading tasks...</div>
-                ) : (
+                ) : tasks.length > 0 ? (
                     <TaskList
                         tasks={filteredTasks}
                         onToggleStatus={toggleTaskStatus}
                         onDelete={deleteTask}
                         onEditTask={handleEditTask}
                     />
+                ) : (
+                    <div className="text-center text-gray-500 py-4">
+                        No tasks found. Start adding some!
+                    </div>
                 )}
             </main>
 

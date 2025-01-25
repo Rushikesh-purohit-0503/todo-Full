@@ -13,7 +13,7 @@ const createNewUser = async (req, res) => {
     if ([email, userName, password].some((val) => (val.trim(' ') === " "))) {
         throw new ApiError(400, "Please enter valid details")
     }
-   
+    quote = quote || "I am using Task Master"
     try {
         const exisitingUser = await userModel.findOne({ email: email }).exec()
         if (exisitingUser) {
@@ -26,10 +26,10 @@ const createNewUser = async (req, res) => {
             userName: userName, 
             email: email,
             password: hashedPassword,
-            quote: quote
-        })
+            quote: quote   
+        }).select('-__v')     
 
-        if (!newUser) {
+        if (!newUser) { 
             throw new ApiError(400, "Failed to create user")
         }
         return res
@@ -115,7 +115,7 @@ const handleUpdate = async (req, res) => {
 
         if (!updatedUser) {
             throw new ApiError(404, "User not found");
-        }
+        }  
 
         return res
             .status(200)
@@ -185,7 +185,7 @@ const deleteUser = async (req, res) => {
 //getAlluser    
 const getAllUser = async (_, res) => {
     try {
-        const users = await userModel.find().select("-refreshToken -__v").exec()
+        const users = await userModel.find({ role: { $ne: 1 } }).select("-refreshToken -__v").exec()
         if (!users) throw new ApiError(404, "No users found")
         return res
             .status(200)

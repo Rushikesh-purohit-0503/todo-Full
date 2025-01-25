@@ -10,8 +10,8 @@ const { default: mongoose } = require('mongoose')
 const createTodo = async (req, res) => {
     let { title, description, status } = req.body
     let { assignedTo } = req.params
-    console.log("assigned_to ",assignedTo);
-    
+    console.log("assigned_to ", assignedTo);
+
     if (!title || status === undefined) {
         throw new ApiError(400, 'Title and status are required')
     }
@@ -56,8 +56,8 @@ const getAlltodos = async (req, res) => {
                 .exec();
 
             if (!todos || todos.length === 0) {
-                res.status(400).json(new ApiResponse(400,{},"no todos found"))
-            }
+                return res.status(201).json(new ApiResponse(201, {}, "no todos found"))
+            } 
             return res
                 .status(200)
                 .json(new ApiResponse(200, todos, "Todos retrieved successfully"));
@@ -68,55 +68,60 @@ const getAlltodos = async (req, res) => {
                 .select("-timestamps -__v")
                 .exec();
 
-            if (!todos || todos.length === 0) {
-                throw new ApiError(404, "No todos found");
-            }
-
-            return res
-                .status(200)
-                .json(new ApiResponse(200, todos, "Todos retrieved successfully"));
+                return res.status(200).json(
+                    new ApiResponse(200, todos, todos.length ? "Todos fetched successfully" : "No todos found")
+                );
+    
         }
     } catch (error) {
-        throw new ApiError(501, error?.message, error);
+       console.error(error)
     }
 };
 
 
 //loggedin user's tasks {if TaskId is given then => that task } {else All task for that user}
 const getTodo = async (req, res) => {
-    const { id } = req.user?._id;
+    const userId = req.user?._id;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw new ApiError(400, "Invalid user ID format");
+    // Validate user ID
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json(new ApiResponse(400, {}, "Invalid user ID format"));
     }
 
     try {
         if (req.params.id) {
+            // Validate todo ID
+            if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+                return res.status(400).json(new ApiResponse(400, {}, "Invalid todo ID format"));
+            }
 
+            // Fetch a single todo
             const todo = await todoModel.findOne({
                 _id: new mongoose.Types.ObjectId(req.params.id),
-                user_id: new mongoose.Types.ObjectId(id)
+                user_id: new mongoose.Types.ObjectId(userId),
             }).select('-__v -timestamps');
 
             if (!todo) {
-                res.status(400).json(new ApiResponse(400,{},"no todos found"))
+                return res.status(404).json(new ApiResponse(404, {}, "Todo not found"));
             }
 
             return res.status(200).json(new ApiResponse(200, todo, "Todo fetched successfully"));
         } else {
+            // Fetch all todos for the user
+            const todos = await todoModel.find({ user_id: new mongoose.Types.ObjectId(userId) }).select('-__v -timestamps');
 
-            const todos = await todoModel.find({ user_id: new mongoose.Types.ObjectId(id) }).select('-__v -timestamps');
+            return res.status(200).json(
+                new ApiResponse(200, todos, todos.length ? "Todos fetched successfully" : "No todos found")
+            );
 
-            if (!todos || todos.length === 0) {
-                res.status(400).json(new ApiResponse(400,{},"no todos found"))
-            }
-
-            return res.status(200).json(new ApiResponse(200, todos, "Todos fetched successfully"));
         }
+
     } catch (error) {
-        console.error(error)
+        console.error("Error fetching todos:", error);
+
     }
 };
+
 
 
 //update tasks for loggedin user and admin
@@ -163,7 +168,7 @@ const updateTodo = async (req, res) => {
         throw new ApiError(error.status || 500, error.message, error);
     }
 };
- 
+
 
 const deleteTodo = async (req, res) => {
     const { todoId } = req.params; // Route parameter

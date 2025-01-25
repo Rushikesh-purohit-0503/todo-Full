@@ -1,114 +1,121 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from 'react';
 import {
     fetchUsers,
-    fetchAllTodos,
-    createTodo,
+    fetchUserTasks,
+    deleteUser,
+    deleteTodo,
     updateUser,
-    deleteUser, 
+    updateTodo,
     logOut
-} from "../api/api";
-import { logout } from "../store/authSlice";
-import Header from "../components/Header";
-import UserTable from "../components/Admin/UserTable";
-import TaskTable from "../components/Admin/TaskTable";
-import AddTaskButton from "../components/Admin/AddTaskButton";
-import AddTaskModal from "../components/AddTaskFormModel";
-import ErrorMessage from "../components/Admin/ErrorMessage";
-import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { login } from "../store/authSlice";
-
+} from '../api/api';
+import { UserCircle, Clock, CheckCircle, Edit, Trash2 } from 'lucide-react';
+import Header from '../components/Header';
+import UserCard from '../components/Admin/UserCard';
+import TaskList from '../components/Admin/AdminnTaskList';
+import EditModal from '../components/Admin/EditModel';
+import { useDispatch, useSelector } from 'react-redux';
+import { login, logout } from '../store/authSlice';
+import { useNavigate } from 'react-router-dom';
 
 
 const AdminPanel = () => {
     const [users, setUsers] = useState([]);
-    const [tasks, setTasks] = useState([]);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [userTasks, setUserTasks] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [isModalOpen, setModalOpen] = useState(false);
+    const [modalData, setModalData] = useState(null); // State for modal data
+    const [isModalOpen, setIsModalOpen] = useState(false); // Modal visibility state
     const [errorMessage, setErrorMessage] = useState("");
     const navigate = useNavigate()
+    let user = useSelector((state) => state.auth.userData)
     const dispatch = useDispatch()
-    const user = useSelector((state) => state.auth.userData)
-
+    useEffect(() => {
+        user = JSON.parse(localStorage.getItem('userInfo'))
+        dispatch(login(user))
+    }, [dispatch])
 
     useEffect(() => {
-        const userData = localStorage.getItem("userInfo");
-        if (userData) {
-            dispatch(login(JSON.parse(userData)));
-        }
-    }, [dispatch]);
-    // Fetch Users
-    useEffect(() => {
-        const fetchAllUsers = async () => {
+        const loadUsers = async () => {
             setLoading(true);
             try {
                 const response = await fetchUsers();
+                // console.log(response)
                 setUsers(response.data?.data || []);
             } catch (error) {
-                console.error("Error fetching users:", error);
-                setErrorMessage("Failed to load users.");
+                console.error('Error fetching users:', error);
             } finally {
                 setLoading(false);
             }
         };
-
-        fetchAllUsers();
+        loadUsers();
     }, []);
 
-    // Fetch All Tasks
-    useEffect(() => {
-        const fetchAllTasks = async () => {
-            setLoading(true);
-            try {
-                const response = await fetchAllTodos();
-                setTasks(response.data?.data || []);
-            } catch (error) {
-                console.error("Error fetching tasks:", error);
-                setErrorMessage("Failed to load tasks.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchAllTasks();
-    }, []);
-
-    // Delete User
-    const handleDeleteUser = async (userId) => {
+    const handleUserSelect = async (user) => {
+        setLoading(true);
         try {
-            await deleteUser(userId);
-            setUsers((prev) => prev.filter((user) => user._id !== userId));
+            const tasksResponse = await fetchUserTasks(user._id);
+            setSelectedUser(user);
+            setUserTasks(tasksResponse.data?.data || []);
         } catch (error) {
-            console.error("Error deleting user:", error);
-            setErrorMessage("Failed to delete user.");
+            console.error('Error fetching user tasks:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Add Task and Assign
-    const handleAddTask = async (data) => {
-        if (data) {
-            try {
-                const response = await createTodo({
-                    title: data.title,
-                    description: data.description,
-                    status: data.status,
-                    assignedTo: data.assignedTo,
-                });
-                setTasks((prev) => [...prev, response.data]);
-                setModalOpen(false);
-            } catch (error) {
-                console.error("Error creating task:", error);
-                setErrorMessage("Failed to create task.");
+    const handleDeleteUser = async (userId) => {
+        try {
+            await deleteUser(userId);
+            setUsers(users.filter(user => user._id !== userId));
+            if (selectedUser?._id === userId) {
+                setSelectedUser(null);
+                setUserTasks([]);
             }
+        } catch (error) {
+            console.error('Error deleting user:', error);
+        }
+    };
+
+    const handleDeleteTask = async (taskId) => {
+        try {
+            await deleteTodo(taskId);
+            setUserTasks(userTasks.filter(task => task._id !== taskId));
+        } catch (error) {
+            console.error('Error deleting task:', error);
+        }
+    };
+
+    const handleEditUser = (user) => {
+        setModalData(user); // Set user data for modal
+        setIsModalOpen(true); // Open modal
+    };
+
+    const handleEditTask = (task) => {
+        setModalData(task); // Set task data for modal
+        setIsModalOpen(true); // Open modal
+    };
+
+    const handleSaveEdit = async (data) => {
+        if (data.userName) {
+            // Handle user update
+            const updatedUser = await updateUser(data); // API call to update user
+            setUsers((prevUsers) =>
+                prevUsers.map((user) => (user._id === data._id ? { ...user, ...updatedUser?.data?.data } : user))
+            );
+        } else {
+            // Handle task update
+            await updateTodo(data); // API call to update task
+            setUserTasks((prevTasks) =>
+                prevTasks.map((task) => (task._id === data._id ? { ...task, ...data } : task))
+            );
         }
     };
     const handleUpdateUser = async (updatedUserData, closeModalCallback) => {
         try {
             const updatedUser = (await updateUser(updatedUserData)).data;
-            console.log(updatedUser);
 
             localStorage.setItem("userInfo", JSON.stringify(updatedUser.data.updatedInfo)); // Update local storage
-
+            
             if (closeModalCallback) {
                 closeModalCallback(); // Close modal or dropdown
             }
@@ -117,7 +124,7 @@ const AdminPanel = () => {
             setErrorMessage("Failed to update user profile.");
         }
     };
-    const onLogout = async () => {
+    const handleLogout = async () => {
         try {
             await logOut();
             dispatch(logout());
@@ -126,38 +133,83 @@ const AdminPanel = () => {
         } catch (error) {
             console.error("Error logging out:", error);
         }
-    }
+    };
     return (
-        <div className="min-h-screen bg-gray-100">
-            {loading && (<div>Loading...</div>)}
-            <Header user={user} onLogout={onLogout} onUpdateUser={handleUpdateUser} />
-            <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-                <div className="flex justify-between items-center">
-                    <h1 className="text-3xl  font-bold text-gray-700">Admin Panel</h1>
+        <div className="min-h-screen bg-blue-50 ">
+            <Header user={user} onLogout={handleLogout} onUpdateUser={handleUpdateUser} />
+            <div className=" mt-5 grid grid-cols-3 gap-6">
+                <div className="col-span-1 space-y-4">
+                    <h2 className="text-2xl font-bold mb-4 text-blue-900">Users</h2>
+                    {loading ? (
+                        <div className="text-center text-blue-600">Loading...</div>
+                    ) : (
+                        users.map(user => (
+                            <UserCard
+                                key={user._id}
+                                user={user}
+                                onClick={() => handleUserSelect(user)}
+                                isSelected={selectedUser?._id === user._id}
+                                onEdit={handleEditUser}
+                                onDelete={handleDeleteUser}
+                            />
+                        ))
+                    )}
                 </div>
-                <ErrorMessage message={errorMessage} />
 
-                <section>
-                    <h2 className="text-2xl font-semibold mb-4 text-gray-700">All Users</h2>
-                    <UserTable users={users} onDeleteUser={handleDeleteUser} />
-                </section>
+                <div className="col-span-2 bg-white rounded-lg p-6 shadow-lg border border-blue-200">
+                    {selectedUser ? (
+                        <div>
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center">
+                                    <UserCircle size={48} className="mr-4 text-blue-600" />
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-blue-900">{selectedUser.userName}</h2>
+                                        <p className="text-blue-700">{selectedUser.email}</p>
+                                    </div>
+                                </div>
+                                <div className="flex space-x-2">
+                                    <button
+                                        onClick={() => handleEditUser(selectedUser)}
+                                        className="text-blue-600 hover:bg-blue-200 p-2 rounded"
+                                    >
+                                        <Edit size={20} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteUser(selectedUser._id)}
+                                        className="text-red-600 hover:bg-red-200 p-2 rounded"
+                                    >
+                                        <Trash2 size={20} />
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-semibold mb-4 text-blue-800">Tasks</h3>
+                                {userTasks.length > 0 ? (
+                                    <TaskList
+                                        tasks={userTasks}
+                                        onEditTask={handleEditTask}
+                                        onDeleteTask={handleDeleteTask}
+                                    />
+                                ) : (
+                                    <p className="text-blue-600">No tasks found for this user</p>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-center text-blue-600">
+                            Select a user to view details
+                        </div>
+                    )}
 
-                <section>
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-2xl font-semibold text-gray-700">All Tasks</h2>
-                        <AddTaskButton onClick={() => setModalOpen(true)} />
-                    </div>
-                    <TaskTable tasks={tasks} users={users} />
-                </section>
-            </main>
-
-            {isModalOpen && (
-                <AddTaskModal
-                    users={users}
-                    onClose={() => setModalOpen(false)}
-                    onAddTask={handleAddTask}
-                />
-            )}
+                </div>
+            </div>
+            {/* Modal for editing user or task */}
+            <EditModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                data={modalData}
+                onSave={handleSaveEdit}
+            />
         </div>
     );
 };

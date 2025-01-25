@@ -25,3 +25,4 @@ const Header = ({ user, onLogout, onUpdateUser }) => {
 };
 
 export default Header;
+ 

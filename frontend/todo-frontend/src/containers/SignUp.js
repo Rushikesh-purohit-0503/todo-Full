@@ -12,13 +12,13 @@ const SignUp = () => {
     const onSubmit = async (data) => {
         try {
             setError('')
-            const response = await signUp(data).unwrap()
+            const response = await signUp(data)
             console.log(response)
             navigate('/login')
         } catch (error) {
-            console.error("SignUp faild: ", error.response.data.message);
+            console.error("SignUp faild: ", error.message);
             setError(error)
-        }
+        } 
     }
 
     return (

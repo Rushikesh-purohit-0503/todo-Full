@@ -57,3 +57,7 @@ export const updateUser = async (data) => {
 export const deleteUser = async (id) => {
     return await api.delete(`/users/delete/${id}`)
 }
+
+export const fetchUserTasks= async (id) => {
+    return await api.post(`todos/all-tasks/${id}`)
+}
