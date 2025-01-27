@@ -1,11 +1,12 @@
 const Jwt = require('jsonwebtoken')
 const userModel = require('../models/user')
 const ApiError = require('../utils/ApiErrors')
-const authanticateUser = async (req, _, next) => {
+const { ApiResponse } = require('../utils/ApiResponse')
+const authanticateUser = async (req, res, next) => {
     try {
         const token = req.cookies?.accessToken || req.header('Authorization')?.replace('Bearer ', '')
 
-        if (!token) throw new ApiError(401, "Not Authorized, no token provided")
+        if (!token) return res.status(401).json(new ApiResponse(401,{},"not Authorized No token found"))
 
         const decoded = Jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
         const user = await userModel.findById(decoded._id).select("-password -refreshToken")

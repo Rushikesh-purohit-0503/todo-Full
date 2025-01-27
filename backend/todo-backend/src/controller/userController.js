@@ -40,7 +40,7 @@ const createNewUser = async (req, res) => {
     } catch (error) {
         throw new ApiError(400, "User not created", error) 
     }
-}
+}  
 
  
 //Login
@@ -50,17 +50,17 @@ const handleLogin = async (req, res) => {
 
     const refreshToken = req.cookies?.refreshToken
     if (refreshToken) {
-        return res.status(400).json(new ApiResponse(401,{},"User already logged in"))
+        return res.status(400).json(new ApiResponse(400,{},"User already logged in"))
     }
 
     let user = {}
 
     try {
         user = await userModel.findOne({ email: email }).exec()
-        if (!user) { throw new ApiError(400, "User not found") }
+        if (!user) { return res.status(400).json(new ApiResponse(400,{},"User not found")) }
     } catch (error) {
         throw new ApiError(400, "error finding in user", error)
-    }
+    } 
   
     try {
         const isValid = await verifyPassword(password, user.password)
@@ -130,7 +130,7 @@ const handleUpdate = async (req, res) => {
 };
 
 //logout
-const logOut = async (req, res) => {
+const hadnleLogout = async (req, res) => {
     const refreshToken = req.cookies?.refreshToken || req.body.refreshToken
     if (!refreshToken) {
         throw new ApiError(401, "User already logout")
@@ -194,7 +194,7 @@ const getAllUser = async (_, res) => {
         throw new ApiError(501, error?.message, error)
     }
 }
-
+    
 //a perticular userInfo
 const getUser = async (req, res) => { 
     let { id } = req.params
@@ -225,6 +225,6 @@ module.exports = {
     getUser,
     deleteUser,
     handleLogin,
-    logOut,
+    hadnleLogout,
     handleUpdate
-}
+}    

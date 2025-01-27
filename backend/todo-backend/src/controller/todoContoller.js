@@ -114,7 +114,7 @@ const getTodo = async (req, res) => {
                 new ApiResponse(200, todos, todos.length ? "Todos fetched successfully" : "No todos found")
             );
 
-        } 
+        }
 
     } catch (error) {
         console.error("Error fetching todos:", error);
@@ -130,9 +130,7 @@ const updateTodo = async (req, res) => {
     const { title, description, status } = req.body;
     const userId = req.user?._id;
     const userRole = req.user?.role;
-
-    console.log(todoId);
-      
+    
     try {
         // Validate todoId
         if (!mongoose.Types.ObjectId.isValid(todoId)) {

@@ -18,6 +18,7 @@ const TaskList = ({ tasks, onToggleStatus, onDelete, onEditTask }) => {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 flex-1">
+              
               <button
                 onClick={() => onToggleStatus(task._id, task.completed)}
                 className={`p-1 rounded-full ${task.completed ? "text-green-500" : "text-blue-500"}`}

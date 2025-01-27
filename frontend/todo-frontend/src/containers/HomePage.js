@@ -3,6 +3,8 @@ import { LogIn, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 const HomePage = () => {
     const navigate = useNavigate();
+
+    
     return (
         <div className="min-h-screen bg-blue-100">
 

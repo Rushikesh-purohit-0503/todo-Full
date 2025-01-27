@@ -31,6 +31,17 @@ const MainPage = () => {
         setIsInitializing(false);
     }, [dispatch]);
 
+    useEffect(()=>{
+        const checkAuthStatus = async () => {
+            if (!isInitializing) {
+                if (!authStatus || user?.role !== 1) {
+                    let res = await logOut();
+                    navigate('/')
+                }
+            }
+        };
+        checkAuthStatus();
+    },[navigate])
 
 
 

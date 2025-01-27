@@ -27,7 +27,7 @@ router
 router
     .route('/logout')
     .post(authenticateUser,  
-        userController.logOut
+        userController.hadnleLogout 
     );
  
   

@@ -23,8 +23,8 @@ export const signIn = async (data) => {
 export const logOut = async () => {
     return await api.post("/users/logout");
 };    
-
-
+  
+  
 /// Tasks Api ///
 export const fetchTodos = async () => {
     return await api.post("/todos/user-tasks"); 

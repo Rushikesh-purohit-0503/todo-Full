@@ -197,7 +197,7 @@ const AdminPanel = () => {
     return (
         <div className="min-h-screen  bg-blue-50 ">
             <Header user={userData} onLogout={handleLogout} onUpdateUser={handleUpdateUser} />
-            <div className="mt-5 ml-1 mr-1 grid grid-cols-3 gap-6">
+            <div className="mt-5 ml-1 grid grid-cols-3 gap-6">
                 <div className="col-span-1 p-6 bg-white items-center rounded-lg shadow-lg border border-blue-200">
                     {errorMessage && (
                         <div className="bg-red-500 text-white p-4 rounded-md">
