@@ -5,19 +5,19 @@ const { ApiResponse } = require('../utils/ApiResponse')
 const { generateAccessAndRefreshToken } = require('../utils/token')
 const { verifyPassword, encryptPassword } = require('../utils/password')
 const { USER_ROLES } = require('../constants')
-const { default: mongoose } = require('mongoose')
+
 const todoModel = require('../models/todos')
 // New User (Sign Up)
 const createNewUser = async (req, res) => {
     let { email, userName, password, quote } = req.body
     if ([email, userName, password].some((val) => (val.trim(' ') === " "))) {
-        throw new ApiError(400, "Please enter valid details")
+        return res.status(400).json(new ApiResponse(400,{},"Enter valid details"))
     }
     quote = quote || "I am using Task Master"
     try {
-        const exisitingUser = await userModel.findOne({ email: email }).exec()
+        const exisitingUser = await userModel.findOne({ email: email }).select('-__v -refreshToken -password').exec()
         if (exisitingUser) {
-            throw new ApiError(400, "Email already exists")
+            res.status(400).json(new ApiResponse(400,exisitingUser,"There is an existing user with this email"))
         }
 
         const hashedPassword = await encryptPassword(password)
@@ -30,7 +30,7 @@ const createNewUser = async (req, res) => {
         }).select('-__v')     
 
         if (!newUser) { 
-            throw new ApiError(400, "Failed to create user")
+           res.status(500).json(new ApiResponse(500,{},"User Not Created Due to some reason"))
         }
         return res
             .status(200).json(new ApiResponse(200, {
@@ -46,7 +46,7 @@ const createNewUser = async (req, res) => {
 //Login
 const handleLogin = async (req, res) => {
     const { email, password } = req.body
-    if ([email, password].some((val) => (val.trim(' ') === ' '))) { throw new ApiError(400, "Please enter valid details") }
+    if ([email, password].some((val) => (val.trim(' ') === ' '))) { return res.status(400).json(new ApiResponse(400,{},"Enter valid details"))}
 
     const refreshToken = req.cookies?.refreshToken
     if (refreshToken) {

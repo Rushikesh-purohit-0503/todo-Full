@@ -11,7 +11,7 @@ const authanticateUser = async (req, res, next) => {
         const decoded = Jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
         const user = await userModel.findById(decoded._id).select("-password -refreshToken")
 
-        if (!user) throw new ApiError(403, "Invalid Token, user not found")
+        if (!user) return res.status(403).json(new ApiResponse(403,{},"No user found with this token"))
 
         req.user = user
         next() 
