@@ -3,7 +3,7 @@ import { UserCircle,Edit,Trash2 } from "lucide-react";
 const UserCard = ({ user, onClick, isSelected, onEdit, onDelete }) => (
     <div 
       onClick={onClick}
-      className={`p-4 border rounded-lg cursor-pointer transition-all ${
+      className={`p-4 border rounded-lg mb-2 cursor-pointer transition-all ${
         isSelected ? 'bg-blue-100 border-blue-500' : 'bg-blue-50 border-blue-200'
       }`}
     >
@@ -13,9 +13,10 @@ const UserCard = ({ user, onClick, isSelected, onEdit, onDelete }) => (
           <div>
             <h3 className="font-semibold text-blue-800">{user.userName}</h3>
             <p className="text-sm text-blue-600">{user.email}</p>
+            
           </div>
         </div>
-        <div className="flex space-x-2">
+        {/* <div className="flex space-x-2">
           <button 
             onClick={(e) => {
               e.stopPropagation();
@@ -34,7 +35,7 @@ const UserCard = ({ user, onClick, isSelected, onEdit, onDelete }) => (
           >
             <Trash2 size={16} />
           </button>
-        </div>
+        </div> */}
       </div>
     </div>
   );

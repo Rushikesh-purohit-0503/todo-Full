@@ -47,9 +47,9 @@ const UserProfile = ({ user, onLogout, onUpdateUser }) => {
 
                     <button
                         onClick={onLogout}
-                        className="w-full mt-4 flex items-center justify-center text-red-500 hover:bg-red-100 p-2 rounded"
+                        className="w-full mt-4 flex items-center justify-center bg-sky-500 text-white  hover:bg-blue-600 p-2 rounded"
                     >
-                        <LogOut size={18} className="mr-2" /> Logout
+                        <LogOut size={18} className="mr-2 " /> Logout
                     </button>
                 </div>
             )}

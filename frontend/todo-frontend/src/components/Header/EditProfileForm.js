@@ -31,14 +31,14 @@ const EditProfileForm = ({ user, onUpdateUser, onCancel }) => {
                     value={editedUser.userName}
                     onChange={handleInputChange}
                     placeholder="Username"
-                    className="w-full p-2 border rounded"
+                    className="w-full p-2 border-blue-500 border rounded"
                 />
                 <input
                     name="quote"
                     value={editedUser.quote}
                     onChange={handleInputChange}
                     placeholder="Quote"
-                    className="w-full p-2 border rounded"
+                    className="w-full p-2 border border-blue-500 rounded"
                 />
                 <div className="flex flex-col justify-between mt-2">
                     <button
@@ -49,7 +49,7 @@ const EditProfileForm = ({ user, onUpdateUser, onCancel }) => {
                     </button>
                     <button
                         onClick={onCancel}
-                        className="text-red-500 mt-2 hover:bg-red-100 p-2 rounded"
+                        className="text-white bg-sky-500 mt-2 hover:bg-blue-600 p-2 rounded"
                     >
                         Cancel
                     </button>

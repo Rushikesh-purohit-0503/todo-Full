@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 
 const AddTaskModal = ({ onClose, onAddTask }) => {
   const { register, handleSubmit, formState: { errors } } = useForm();
-  const [assignedTo, setAssignedTo] = useState(""); // You can extend this with logic to assign tasks
+  
   const [status, setStatus] = useState(false); // Default status is false (not completed)
 
   // Handle form submission

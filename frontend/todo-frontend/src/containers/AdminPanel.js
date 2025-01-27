@@ -4,11 +4,13 @@ import {
     fetchUserTasks,
     deleteUser,
     deleteTodo,
+    updateSelectedUser,
     updateUser,
-    updateTodo,
-    logOut
+    logOut,
+    updateTodoAdmin,
+    createTodoAdmin
 } from '../api/api';
-import { UserCircle, Clock, CheckCircle, Edit, Trash2 } from 'lucide-react';
+import { UserCircle, Plus, Edit, Trash2 } from 'lucide-react';
 import Header from '../components/Header';
 import UserCard from '../components/Admin/UserCard';
 import TaskList from '../components/Admin/AdminnTaskList';
@@ -16,38 +18,60 @@ import EditModal from '../components/Admin/EditModel';
 import { useDispatch, useSelector } from 'react-redux';
 import { login, logout } from '../store/authSlice';
 import { useNavigate } from 'react-router-dom';
-
-
+import AddTaskModal from '../components/AddTaskFormModel';
 const AdminPanel = () => {
     const [users, setUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
     const [userTasks, setUserTasks] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [modalData, setModalData] = useState(null); // State for modal data
-    const [isModalOpen, setIsModalOpen] = useState(false); // Modal visibility state
+    const [modalData, setModalData] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
-    const navigate = useNavigate()
-    let user = useSelector((state) => state.auth.userData)
-    const dispatch = useDispatch()
-    useEffect(() => {
-        user = JSON.parse(localStorage.getItem('userInfo'))
-        dispatch(login(user))
-    }, [dispatch])
+    const [isInitializing, setIsInitializing] = useState(true);
+    const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+
+    const navigate = useNavigate();
+    const userData = useSelector((state) => state.auth.userData);
+    const authStatus = useSelector((state) => state.auth.status);
+    const dispatch = useDispatch();
 
     useEffect(() => {
+        const userData = localStorage.getItem("userInfo");
+        if (userData) {
+            dispatch(login(JSON.parse(userData)));
+        }
+        setIsInitializing(false);
+    }, [dispatch]);
+
+    useEffect(() => {
+        if (!isInitializing) {
+
+            if (!authStatus || userData?.role !== 1) {
+                handleLogout();
+            }
+        }
+    }, [isInitializing, authStatus, navigate]);
+
+    useEffect(() => {
+        let isComponentActive = true;
         const loadUsers = async () => {
             setLoading(true);
             try {
                 const response = await fetchUsers();
-                // console.log(response)
                 setUsers(response.data?.data || []);
             } catch (error) {
-                console.error('Error fetching users:', error);
+                setErrorMessage(error.message);
             } finally {
-                setLoading(false);
+                if (isComponentActive) {
+                    setLoading(false);
+                }
             }
         };
         loadUsers();
+
+        return () => {
+            isComponentActive = false;
+        };
     }, []);
 
     const handleUserSelect = async (user) => {
@@ -96,18 +120,51 @@ const AdminPanel = () => {
     };
 
     const handleSaveEdit = async (data) => {
-        if (data.userName) {
-            // Handle user update
-            const updatedUser = await updateUser(data); // API call to update user
-            setUsers((prevUsers) =>
-                prevUsers.map((user) => (user._id === data._id ? { ...user, ...updatedUser?.data?.data } : user))
-            );
-        } else {
-            // Handle task update
-            await updateTodo(data); // API call to update task
-            setUserTasks((prevTasks) =>
-                prevTasks.map((task) => (task._id === data._id ? { ...task, ...data } : task))
-            );
+        try {
+            if (data.userName) {
+                // Update user
+                const response = await updateSelectedUser(data._id, data); // API call to update user
+                const updatedUser = response.data?.data?.updatedInfo;
+                // Update local state
+                setUsers((prevUsers) =>
+                    prevUsers.map((user) => (user._id === updatedUser._id ? { ...user, ...updatedUser } : user))
+                );
+
+                if (selectedUser?._id === updatedUser._id) {
+                    setSelectedUser((prevSelectedUser) => ({
+                        ...prevSelectedUser,
+                        ...updatedUser,
+                    }));
+                }
+            } else {
+                // Update task
+                let res = await updateTodoAdmin(data._id, data);
+                setUserTasks((prevTasks) =>
+                    prevTasks.map((task) => (task._id === data._id ? { ...task, ...data } : task))
+                );
+            }
+        } catch (error) {
+            console.error('Error updating data:', error);
+            setErrorMessage('Failed to update data.');
+        } finally {
+            setIsModalOpen(false); // Close modal
+        }
+    };
+
+    const handleAddTask = () => {
+        setIsAddTaskModalOpen(true); // Open AddTaskModal
+    };
+
+    const handleAddTaskSubmit = async (taskData) => {
+        try {
+            const response = await createTodoAdmin(selectedUser._id, taskData); // API to add a task
+            const newTask = response.data?.data;
+
+            setUserTasks((prevTasks) => [...prevTasks, newTask]); // Update tasks locally
+            setIsAddTaskModalOpen(false); // Close the modal
+        } catch (error) {
+            console.error("Error adding task:", error);
+            setErrorMessage("Failed to add task.");
         }
     };
     const handleUpdateUser = async (updatedUserData, closeModalCallback) => {
@@ -115,7 +172,8 @@ const AdminPanel = () => {
             const updatedUser = (await updateUser(updatedUserData)).data;
 
             localStorage.setItem("userInfo", JSON.stringify(updatedUser.data.updatedInfo)); // Update local storage
-            
+
+            dispatch(login(updatedUser.data.updatedInfo))
             if (closeModalCallback) {
                 closeModalCallback(); // Close modal or dropdown
             }
@@ -134,11 +192,19 @@ const AdminPanel = () => {
             console.error("Error logging out:", error);
         }
     };
+
+
     return (
-        <div className="min-h-screen bg-blue-50 ">
-            <Header user={user} onLogout={handleLogout} onUpdateUser={handleUpdateUser} />
-            <div className=" mt-5 grid grid-cols-3 gap-6">
-                <div className="col-span-1 space-y-4">
+        <div className="min-h-screen  bg-blue-50 ">
+            <Header user={userData} onLogout={handleLogout} onUpdateUser={handleUpdateUser} />
+            <div className="mt-5 ml-1 mr-1 grid grid-cols-3 gap-6">
+                <div className="col-span-1 p-6 bg-white items-center rounded-lg shadow-lg border border-blue-200">
+                    {errorMessage && (
+                        <div className="bg-red-500 text-white p-4 rounded-md">
+                            {errorMessage}
+                        </div>
+                    )}
+
                     <h2 className="text-2xl font-bold mb-4 text-blue-900">Users</h2>
                     {loading ? (
                         <div className="text-center text-blue-600">Loading...</div>
@@ -165,6 +231,7 @@ const AdminPanel = () => {
                                     <div>
                                         <h2 className="text-2xl font-bold text-blue-900">{selectedUser.userName}</h2>
                                         <p className="text-blue-700">{selectedUser.email}</p>
+                                        <p className="text-blue-700">{selectedUser.quote}</p>
                                     </div>
                                 </div>
                                 <div className="flex space-x-2">
@@ -183,7 +250,16 @@ const AdminPanel = () => {
                                 </div>
                             </div>
                             <div>
-                                <h3 className="text-xl font-semibold mb-4 text-blue-800">Tasks</h3>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-xl font-semibold text-blue-800">Tasks</h3>
+                                    <button
+                                        onClick={handleAddTask}
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    >
+                                        <Plus size={18} />
+                                        Add Task
+                                    </button>
+                                </div>
                                 {userTasks.length > 0 ? (
                                     <TaskList
                                         tasks={userTasks}
@@ -200,7 +276,6 @@ const AdminPanel = () => {
                             Select a user to view details
                         </div>
                     )}
-
                 </div>
             </div>
             {/* Modal for editing user or task */}
@@ -210,6 +285,12 @@ const AdminPanel = () => {
                 data={modalData}
                 onSave={handleSaveEdit}
             />
+            {isAddTaskModalOpen && (
+                <AddTaskModal
+                    onClose={() => setIsAddTaskModalOpen(false)}
+                    onAddTask={handleAddTaskSubmit}
+                />
+            )}
         </div>
     );
 };

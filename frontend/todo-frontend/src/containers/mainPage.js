@@ -17,17 +17,22 @@ const MainPage = () => {
     const [updateModalOpen, setUpdateModalOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
     const [errorMessage, setErrorMessage] = useState("");
-
+    const [isInitializing, setIsInitializing] = useState(true);
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const user = useSelector((state) => state.auth.userData);
+    const authStatus = useSelector((state) => state.auth.status)
 
     useEffect(() => {
         const userData = localStorage.getItem("userInfo");
         if (userData) {
             dispatch(login(JSON.parse(userData)));
         }
+        setIsInitializing(false);
     }, [dispatch]);
+
+
+
 
     useEffect(() => {
         const fetchTasks = async () => {
@@ -73,9 +78,10 @@ const MainPage = () => {
                 const newTask = response.data.data;
 
                 // Update the state immediately to reflect the new task
-                setTasks((prev) =>{ 
-                    
-                    return [...prev, newTask]});
+                setTasks((prev) => {
+
+                    return [...prev, newTask]
+                });
 
                 setModalOpen(false);
             } catch (error) {
@@ -134,7 +140,7 @@ const MainPage = () => {
             console.log(updatedUser);
 
             localStorage.setItem("userInfo", JSON.stringify(updatedUser.data.updatedInfo)); // Update local storage
-
+            dispatch(login(updatedUser.data.updatedInfo))
             if (closeModalCallback) {
                 closeModalCallback(); // Close modal or dropdown
             }
@@ -147,7 +153,7 @@ const MainPage = () => {
     const filteredTasks = tasks.filter((task) =>
         task.title?.toLowerCase().includes(searchQuery)
     );
-
+    
     return (
         <div className="min-h-screen bg-blue-100">
             {/* Header Component */}

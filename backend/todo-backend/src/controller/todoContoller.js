@@ -10,7 +10,7 @@ const { default: mongoose } = require('mongoose')
 const createTodo = async (req, res) => {
     let { title, description, status } = req.body
     let { assignedTo } = req.params
-    console.log("assigned_to ", assignedTo);
+    console.log("assigned_to ", assignedTo); 
 
     if (!title || status === undefined) {
         throw new ApiError(400, 'Title and status are required')
@@ -35,7 +35,7 @@ const createTodo = async (req, res) => {
         })
 
         if (!newTodo) {
-            throw new ApiError(402, "Todo not created")
+            return res.status(201).json(new ApiResponse(201,{},"Task not created!!"))
         }
         return res.status(200).json(new ApiResponse(201, newTodo, "Todo created successfully"))
     } catch (error) {
@@ -57,7 +57,7 @@ const getAlltodos = async (req, res) => {
 
             if (!todos || todos.length === 0) {
                 return res.status(201).json(new ApiResponse(201, {}, "no todos found"))
-            } 
+            }
             return res
                 .status(200)
                 .json(new ApiResponse(200, todos, "Todos retrieved successfully"));
@@ -68,13 +68,13 @@ const getAlltodos = async (req, res) => {
                 .select("-timestamps -__v")
                 .exec();
 
-                return res.status(200).json(
-                    new ApiResponse(200, todos, todos.length ? "Todos fetched successfully" : "No todos found")
-                );
-    
+            return res.status(200).json(
+                new ApiResponse(200, todos, todos.length ? "Todos fetched successfully" : "No todos found")
+            );
+
         }
     } catch (error) {
-       console.error(error)
+        console.error(error)
     }
 };
 
@@ -114,7 +114,7 @@ const getTodo = async (req, res) => {
                 new ApiResponse(200, todos, todos.length ? "Todos fetched successfully" : "No todos found")
             );
 
-        }
+        } 
 
     } catch (error) {
         console.error("Error fetching todos:", error);
@@ -130,6 +130,9 @@ const updateTodo = async (req, res) => {
     const { title, description, status } = req.body;
     const userId = req.user?._id;
     const userRole = req.user?.role;
+
+    console.log(todoId);
+      
     try {
         // Validate todoId
         if (!mongoose.Types.ObjectId.isValid(todoId)) {
@@ -158,7 +161,7 @@ const updateTodo = async (req, res) => {
             },
             { new: true } // Return updated todo
         ).select('-__v');
-
+   
         if (!updatedTodo) {
             throw new ApiError(500, "Error updating the todo");
         }

@@ -16,10 +16,10 @@ router
         todoController.createTodo
     )
 router
-    .route('/new-task/:assignedTo')
+    .route('/admin-new-task/:assignedTo')
     .post(authanticateUser,
-        todoValidator,
-        validateRequest,
+        validateRequest,  
+        verifyUserRoles(USER_ROLES.admin),
         todoController.createTodo
     )
 
@@ -41,16 +41,16 @@ router
 // <------ get logged in users tasks ----->//
 router
     .route('/user-tasks')
-    .post( 
+    .post(
         authanticateUser,
         todoController.getTodo
     )
-router 
-    .route('/user-tasks/:id')  
-    .post( 
+router
+    .route('/user-tasks/:id')
+    .post(
         authanticateUser,
         todoController.getTodo
-    ) 
+    )
 
 
 // <--------- update task --------> //
@@ -61,6 +61,14 @@ router
         validateRequest,
         todoController.updateTodo
     )
+
+router
+    .route('/update-admin/:todoId')  
+    .put(
+        authanticateUser,
+        validateRequest,
+        verifyUserRoles(USER_ROLES.admin),
+        todoController.updateTodo)
 
 
 // <--------- delete tasks (only done by admin) --------> //

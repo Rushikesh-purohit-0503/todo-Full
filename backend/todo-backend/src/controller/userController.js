@@ -50,7 +50,7 @@ const handleLogin = async (req, res) => {
 
     const refreshToken = req.cookies?.refreshToken
     if (refreshToken) {
-        throw new ApiError(400, "User already logged in")
+        return res.status(400).json(new ApiResponse(401,{},"User already logged in"))
     }
 
     let user = {}
@@ -61,13 +61,13 @@ const handleLogin = async (req, res) => {
     } catch (error) {
         throw new ApiError(400, "error finding in user", error)
     }
-
+  
     try {
         const isValid = await verifyPassword(password, user.password)
         if (!isValid) { throw new ApiError(400, "Invalid password") }
     } catch (error) {
         throw new ApiError(400, "error verifying password", error)
-    } 
+    }  
 
     const { accessToken, refreshToken: newRefreshToken } = await generateAccessAndRefreshToken(user)
     const loggedInUser = await userModel.findById(user._id).select("-password -refreshToken -__v").exec()
@@ -92,12 +92,12 @@ const handleUpdate = async (req, res) => {
     let { userName, quote, password } = req.body;
     let { userId } = req.params;
 
-    // Validate input
+    // Validate input 
     if ([userName, quote].some((val) => !val || val.trim() === '')) {
         throw new ApiError(400, "Please enter valid details");
     }
 
-    const loggedInUserId = req.user?._id;
+    const loggedInUserId = req.user?._id;        
     const userRole = req.user?.role;
     userId = userId || req.user?._id;
    
@@ -115,8 +115,8 @@ const handleUpdate = async (req, res) => {
 
         if (!updatedUser) {
             throw new ApiError(404, "User not found");
-        }  
-
+        }    
+  
         return res
             .status(200)
             .json(

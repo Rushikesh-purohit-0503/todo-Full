@@ -26,11 +26,11 @@ router
 // <------- Logout --------> //
 router
     .route('/logout')
-    .post(authenticateUser, 
+    .post(authenticateUser,  
         userController.logOut
     );
  
-
+  
 // <------- update user --------> //
 router
     .route('/update')
@@ -39,10 +39,10 @@ router
         userController.handleUpdate);
 router
     .route('/update/:userId')
-    .put(authenticateUser, userValidator,
+    .put(authenticateUser,
         validateRequest,
         verifyUserRoles(USER_ROLES.admin),
-        userController.handleUpdate); 
+        userController.handleUpdate);  
 
 
 // <------- delete user (only by admin) --------> //

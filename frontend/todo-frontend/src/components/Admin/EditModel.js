@@ -1,13 +1,29 @@
 import React, { useState, useEffect } from 'react';
 
-const EditModal = ({ isOpen, onClose, data, onSave }) => {
-  const [formData, setFormData] = useState();
-  
+const EditModal = ({ isOpen, onClose, data={}, onSave }) => {
+  const [formData, setFormData] = useState({});
+
   useEffect(() => {
-    setFormData(data);
+    if (data) {
+
+      console.log('Data received:', data);
+      if (data.userName) {
+        setFormData({
+          userName: data.userName || '',
+          email: data.email || '',
+          quote: data.quote || ''  // Make sure the quote field exists for users
+        });
+      } else {
+        setFormData({
+          title: data.title || '',
+          description: data.description || ''
+        });
+      }
+    }
   }, [data]);
 
   const handleChange = (e) => {
+
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -17,7 +33,11 @@ const EditModal = ({ isOpen, onClose, data, onSave }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData);
+    
+    const formDataWithId = { ...formData, _id: data._id }; 
+    
+    console.log("Saved Form Data: ", formDataWithId);
+    onSave(formDataWithId);
     onClose();
   };
 
@@ -37,17 +57,17 @@ const EditModal = ({ isOpen, onClose, data, onSave }) => {
                 <input
                   type="text"
                   name="userName"
-                  value={formData.userName}
+                  value={formData.userName || ''}
                   onChange={handleChange}
                   className="w-full p-2 border border-sky-300 rounded focus:ring-2 focus:ring-sky-300"
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sky-800" htmlFor="email">Email</label>
+                <label className="block text-sky-800" htmlFor="email">Quote</label>
                 <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
+                  type="quote"
+                  name="quote"
+                  value={formData.quote || ''}
                   onChange={handleChange}
                   className="w-full p-2 border border-sky-300 rounded focus:ring-2 focus:ring-sky-300"
                 />
@@ -56,11 +76,11 @@ const EditModal = ({ isOpen, onClose, data, onSave }) => {
           ) : (
             <>
               <div className="mb-4">
-                <label className="block text-sky-800" htmlFor="taskName">Task Name</label>
+                <label className="block text-sky-800" htmlFor="taskName">Title</label>
                 <input
                   type="text"
-                  name="taskName"
-                  value={formData.title}
+                  name="title"
+                  value={formData.title || ""}
                   onChange={handleChange}
                   className="w-full p-2 border border-sky-300 rounded focus:ring-2 focus:ring-sky-300"
                 />
@@ -68,8 +88,8 @@ const EditModal = ({ isOpen, onClose, data, onSave }) => {
               <div className="mb-4">
                 <label className="block text-sky-800" htmlFor="taskDescription">Description</label>
                 <textarea
-                  name="taskDescription"
-                  value={formData.taskDescription}
+                  name="description"
+                  value={formData.description || ''}
                   onChange={handleChange}
                   className="w-full p-2 border border-sky-300 rounded focus:ring-2 focus:ring-sky-300"
                 />
