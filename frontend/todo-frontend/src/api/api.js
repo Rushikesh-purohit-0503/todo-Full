@@ -20,8 +20,8 @@ export const signIn = async (data) => {
     return await api.post("/users/login", data);
 };
 
-export const logOut = async () => {
-    return await api.post("/users/logout");
+export const logOut =  () => {
+    return  api.post("/users/logout");
 };    
   
   

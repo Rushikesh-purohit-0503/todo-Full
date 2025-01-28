@@ -24,13 +24,13 @@ const createNewUser = async (req, res) => {
 
         const newUser = await userModel.create({
             userName: userName, 
-            email: email,
+            email: email,   
             password: hashedPassword,
             quote: quote   
-        }).select('-__v')     
+        })     
 
         if (!newUser) { 
-           res.status(500).json(new ApiResponse(500,{},"User Not Created Due to some reason"))
+          return res.status(500).json(new ApiResponse(500,{},"User Not Created Due to some reason"))
         }
         return res
             .status(200).json(new ApiResponse(200, {
@@ -64,9 +64,9 @@ const handleLogin = async (req, res) => {
   
     try {
         const isValid = await verifyPassword(password, user.password)
-        if (!isValid) { throw new ApiError(400, "Invalid password") }
+        if (!isValid) { return res.status(400).json(new ApiResponse(400,{},"Invalid Password")) }
     } catch (error) {
-        throw new ApiError(400, "error verifying password", error)
+        throw new ApiError(400, "error verifying password", error) 
     }  
 
     const { accessToken, refreshToken: newRefreshToken } = await generateAccessAndRefreshToken(user)

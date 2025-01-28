@@ -21,7 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import AddTaskModal from '../components/AddTaskFormModel';
 const AdminPanel = () => {
     const [users, setUsers] = useState([]);
-    const [selectedUser, setSelectedUser] = useState(null);
+    const [selectedUser, setSelectedUser] = useState();
     const [userTasks, setUserTasks] = useState([]);
     const [loading, setLoading] = useState(false);
     const [modalData, setModalData] = useState(null);
@@ -47,10 +47,11 @@ const AdminPanel = () => {
         if (!isInitializing) {
 
             if (!authStatus || userData?.role !== 1) {
-                handleLogout();
+                dispatch(logout())
+                navigate('/')
             }
         }
-    }, [isInitializing, authStatus, navigate]);
+    }, [isInitializing, authStatus, dispatch, navigate]);
 
     useEffect(() => {
         let isComponentActive = true;
@@ -59,6 +60,14 @@ const AdminPanel = () => {
             try {
                 const response = await fetchUsers();
                 setUsers(response.data?.data || []);
+                if (response.data.data.length > 0) {
+                    const firstUser = response.data?.data[0];
+                    setSelectedUser(firstUser);
+
+                    // Fetch tasks for the first user
+                    const tasksResponse = await fetchUserTasks(firstUser._id);
+                    setUserTasks(tasksResponse.data?.data || []);
+                }
             } catch (error) {
                 setErrorMessage(error.message);
             } finally {
@@ -139,8 +148,9 @@ const AdminPanel = () => {
             } else {
                 // Update task
                 let res = await updateTodoAdmin(data._id, data);
+                console.log(res.data.data)
                 setUserTasks((prevTasks) =>
-                    prevTasks.map((task) => (task._id === data._id ? { ...task, ...data } : task))
+                    prevTasks.map((task) => (task._id === data._id ? { ...task, ...res?.data?.data } : task))
                 );
             }
         } catch (error) {
@@ -182,9 +192,9 @@ const AdminPanel = () => {
             setErrorMessage("Failed to update user profile.");
         }
     };
-    const handleLogout = async () => {
+    const handleLogout = () => {
         try {
-            await logOut();
+            logOut();
             dispatch(logout());
             localStorage.clear();
             navigate("/");

@@ -31,17 +31,14 @@ const MainPage = () => {
         setIsInitializing(false);
     }, [dispatch]);
 
-    useEffect(()=>{
-        const checkAuthStatus = async () => {
-            if (!isInitializing) {
-                if (!authStatus || user?.role !== 1) {
-                    let res = await logOut();
-                    navigate('/')
-                }
+    useEffect(() => {
+        if (!isInitializing) {
+            if (!authStatus) {
+                dispatch(logout())
+                navigate('/')
             }
         };
-        checkAuthStatus();
-    },[navigate])
+    }, [authStatus, isInitializing, navigate, dispatch])
 
 
 
@@ -164,7 +161,7 @@ const MainPage = () => {
     const filteredTasks = tasks.filter((task) =>
         task.title?.toLowerCase().includes(searchQuery)
     );
-    
+
     return (
         <div className="min-h-screen bg-blue-100">
             {/* Header Component */}

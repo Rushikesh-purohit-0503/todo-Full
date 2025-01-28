@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from 'react-hook-form';
 import { useDispatch } from "react-redux";
 import { login } from "../store/authSlice";  // Import your Redux action
@@ -18,11 +18,18 @@ const SignIn = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const [error, setError] = useState("")
 
+    // const passwordValue = watch("password");
+    // const emailValue = watch("email");
+
+    
+    // if (error && (passwordValue || emailValue)) {
+    //     setError("");
+    // }
     const onSubmit = async (data) => {
         try {
             let { email, password } = ValidateData(data)
-
             const response = await signIn({ email, password })
             const result = response.data;
             const userData = result.data.user;
@@ -42,13 +49,16 @@ const SignIn = () => {
                 navigate("/main"); // Regular user redirected to main page
             }
         } catch (error) {
-            console.error("Login failed:", error);
-            // Handle error state or display appropriate message
+            console.error(error.response)
+            setError(error.response.data.message)// Handle error state or display appropriate message
+
         }
     }
 
     return (
         <React.Fragment>
+
+
             <div className="min-h-screen bg-gray-100 flex flex-col">
                 <main className="flex-grow flex items-center justify-center px-4">
                     <div className="max-w-md w-full">
@@ -74,6 +84,7 @@ const SignIn = () => {
                                     className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
                                 {errors.email && <span className="text-red-500 text-sm">{errors.email.message}</span>}
+
                             </div>
                             <div className="mb-6">
                                 <label className="block text-gray-700 mb-2">Password</label>
@@ -83,6 +94,7 @@ const SignIn = () => {
                                     className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
                                 {errors.password && <span className="text-red-500 text-sm">{errors.password.message}</span>}
+                                {error && <div className="text-red-500 text-sm">{error}</div>}
                             </div>
                             <button
                                 type="submit"
