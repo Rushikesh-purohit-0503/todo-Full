@@ -169,8 +169,9 @@ const AdminPanel = () => {
         try {
             const response = await createTodoAdmin(selectedUser._id, taskData); // API to add a task
             const newTask = response.data?.data;
-
-            setUserTasks((prevTasks) => [...prevTasks, newTask]); // Update tasks locally
+            if (userTasks !== null) {
+                setUserTasks((prevTasks) => [...prevTasks, newTask]); // Update tasks locally
+            }
             setIsAddTaskModalOpen(false); // Close the modal
         } catch (error) {
             console.error("Error adding task:", error);
