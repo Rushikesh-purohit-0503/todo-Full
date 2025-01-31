@@ -11,6 +11,8 @@ import UpdateModal from "../components/Updatemodel";
 
 const MainPage = () => {
     const [tasks, setTasks] = useState([]);
+
+
     const [searchQuery, setSearchQuery] = useState("");
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setModalOpen] = useState(false);
@@ -83,6 +85,7 @@ const MainPage = () => {
                 });
                 console.log("Task creation response:", response.data); // Debug API response
 
+
                 const newTask = response.data.data;
 
                 // Update the state immediately to reflect the new task
@@ -121,6 +124,8 @@ const MainPage = () => {
     const handleUpdateTask = async (taskId, updatedData) => {
         try {
             const response = await updateTodo(taskId, updatedData);
+
+
             setTasks((prev) =>
                 prev.map((task) =>
                     task._id === taskId ? { ...task, ...response.data.data } : task

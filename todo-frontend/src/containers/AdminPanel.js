@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import io from 'socket.io-client';
+import { notification } from 'antd';
 import {
     fetchUsers,
     fetchUserTasks,
@@ -19,6 +21,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { login, logout } from '../store/authSlice';
 import { useNavigate } from 'react-router-dom';
 import AddTaskModal from '../components/AddTaskFormModel';
+const socket = io('http://localhost:3500', {
+    withCredentials: true,
+});
 const AdminPanel = () => {
     const [users, setUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState();
@@ -42,6 +47,10 @@ const AdminPanel = () => {
         }
         setIsInitializing(false);
     }, [dispatch]);
+
+
+
+
 
     useEffect(() => {
         if (!isInitializing) {
@@ -82,7 +91,56 @@ const AdminPanel = () => {
             isComponentActive = false;
         };
     }, []);
-
+    useEffect(() => {
+        // Listen for new task events
+        socket.on('newTask', (data) => {
+            // Show notification when a new task is created
+            notification.info({
+                message: 'New Task Created',
+                description: `${data.message}: ${data.task.title}`,
+                placement: 'topRight', // You can adjust the placement as needed
+            });
+            
+            // Update the task list for the selected user without refreshing
+            if (selectedUser && selectedUser._id === data.task.user_id) {
+               
+                setUserTasks((prevTasks) => [...prevTasks, data.task]);
+            } else {
+                console.log('Selected user does not match the task user');
+            }
+    
+            console.log('New Task:', data.task); // Optional: log the task data for debugging
+        });
+        socket.on('updateTask', (data) => {
+            // Show notification when a new task is created
+            notification.info({
+                message: 'Task Updated',
+                description: `${data.message}: ${data.task.title}`,
+                placement: 'topRight', // You can adjust the placement as needed
+            });
+            
+            // Update the task list for the selected user without refreshing
+            if (selectedUser && selectedUser._id === data.task.user_id) {
+               
+                setUserTasks((prevTasks) => 
+                    prevTasks.map((task) => 
+                      task._id === data.task._id ? { ...task, ...data.task } : task
+                    )
+                  );
+                  
+            } else {
+                console.log('Selected user does not match the task user');
+            }
+    
+            console.log('Updated Task:', data); // Optional: log the task data for debugging
+        });
+    
+        // Cleanup on unmount
+        return () => {
+            socket.off('newTask');
+            socket.off('updateTask')
+        };
+    }, [selectedUser]);
     const handleUserSelect = async (user) => {
         setLoading(true);
         try {
@@ -99,7 +157,7 @@ const AdminPanel = () => {
     const handleDeleteUser = async (userId) => {
         try {
             await deleteUser(userId);
-            setUsers(users.filter(user => user._id !== userId));
+            setUsers((prevUsers) => prevUsers.filter(user => user._id !== userId));
             if (selectedUser?._id === userId) {
                 setSelectedUser(null);
                 setUserTasks([]);

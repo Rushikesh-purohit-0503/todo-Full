@@ -30,13 +30,18 @@ const createTodo = async (req, res) => {
         const newTodo = await todoModel.create({
             user_id: user_id,
             title: title,
-            description: description,
+            description: description, 
             completed: status
         })
 
         if (!newTodo) {
             return res.status(201).json(new ApiResponse(201,{},"Task not created!!"))
         }
+        const io = req.app.get('io'); // Get the io instance
+        io.emit('newTask', { 
+            message: `A new task has been created by ${req.user.userName || 'User'}`,
+            task: newTodo
+        });
         return res.status(200).json(new ApiResponse(201, newTodo, "Todo created successfully"))
     } catch (error) {
         throw new ApiError(500, "Error creating Todo", error)
@@ -64,7 +69,7 @@ const getAlltodos = async (req, res) => {
         } else {
             // If no userId provided, retrieve all todos
             const todos = await todoModel
-                .find()
+                .find() 
                 .select("-timestamps -__v")
                 .exec();
 
@@ -163,7 +168,11 @@ const updateTodo = async (req, res) => {
         if (!updatedTodo) {
             throw new ApiError(500, "Error updating the todo");
         }
-
+        const io = req.app.get('io'); // Get the io instance
+        io.emit('updateTask', { 
+            message: `A task has been updated by ${req.user.userName || 'User'}`,
+            task: updatedTodo
+        });
         res.status(200).json(new ApiResponse(200, updatedTodo, "Todo updated successfully"));
     } catch (error) {
         throw new ApiError(error.status || 500, error.message, error);
