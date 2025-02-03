@@ -179,7 +179,7 @@ const updateTodo = async (req, res) => {
     }
 };
 
-
+console.log("hello")
 const deleteTodo = async (req, res) => {
     const { todoId } = req.params; // Route parameter
 
