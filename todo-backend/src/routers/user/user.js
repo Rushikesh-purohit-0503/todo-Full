@@ -23,6 +23,8 @@ router
     );
   
 
+// <---------------- Protected  Routes ----------------> //
+    
 // <------- Logout --------> //
 router
     .route('/logout')
